@@ -203,19 +203,19 @@ func (b *bucket) bucketMetadata(tx *bbolt.Tx) (*bucketMetadata, error) {
 	return &metadata, nil
 }
 
-func (b *bucket) objectMetadata(tx *bbolt.Tx, name []byte) (*objectMetadata, error) {
+func (b *bucket) objectMetadata(tx *bbolt.Tx, name []byte) (objectMetadata, error) {
 	metaBytes := b.objectsBucket(tx).Get(name)
 	if metaBytes == nil {
-		return nil, metastore.ErrNotExist
+		return objectMetadata{}, nil
 	}
 
 	var metadata objectMetadata
 	err := json.Unmarshal(metaBytes, &metadata)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal object metadata: %w", err)
+		return objectMetadata{}, fmt.Errorf("unmarshal object metadata: %w", err)
 	}
 
-	return &metadata, nil
+	return metadata, nil
 }
 
 func (b *bucket) putObjectMetadata(tx *bbolt.Tx, name []byte, metadata *objectMetadata) error {
@@ -298,7 +298,7 @@ func (b *bucket) PutObject(
 	}
 
 	oldMetadata, err := b.objectMetadata(tx, []byte(name))
-	if err != nil && !errors.Is(err, metastore.ErrNotExist) {
+	if err != nil {
 		return nil, err
 	}
 
@@ -313,7 +313,7 @@ func (b *bucket) PutObject(
 			Metageneration: 1,
 		},
 	}
-	if oldMetadata != nil && oldMetadata.Current != nil && bucketMetadata.Versioning.Enabled {
+	if oldMetadata.Current != nil && bucketMetadata.Versioning.Enabled {
 		newMetadata.NonCurrent = append(oldMetadata.NonCurrent, *oldMetadata.Current)
 	}
 
