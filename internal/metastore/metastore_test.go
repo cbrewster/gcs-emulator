@@ -3,16 +3,16 @@ package metastore_test
 import (
 	"crypto/md5"
 	"crypto/sha256"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/shoenig/test/must"
+
 	"github.com/cbrewster/gcs-emulator/internal/chunkstore"
 	"github.com/cbrewster/gcs-emulator/internal/metastore"
 	"github.com/cbrewster/gcs-emulator/internal/metastore/bolt"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/shoenig/test/must"
 )
 
 func newBoltStore(t *testing.T) metastore.Store {
@@ -89,7 +89,6 @@ func TestCreateObjects(t *testing.T) {
 				Chunks: []chunkstore.ChunkHash{sha256.Sum256([]byte("phony"))},
 				MD5Sum: md5.Sum([]byte("phony")),
 			})
-			fmt.Printf("%+v %+v\n", getRes, putRes)
 			must.NoError(t, err)
 			must.NotEq(t, getRes, putRes)
 

@@ -3,6 +3,7 @@ package file
 import (
 	"crypto/md5"
 	"crypto/sha256"
+	"encoding/base32"
 	"fmt"
 	"hash"
 	"io"
@@ -13,12 +14,11 @@ import (
 	"github.com/cbrewster/gcs-emulator/internal/chunkstore"
 )
 
+var base32Encoder = base32.HexEncoding.WithPadding(base32.NoPadding)
+
 func chunkPath(storeDir string, chunkHash chunkstore.ChunkHash) string {
-	return filepath.Join(
-		storeDir, "chunks",
-		fmt.Sprintf("%X", chunkHash[:2]),
-		fmt.Sprintf("%X", chunkHash),
-	)
+	base32Hash := base32Encoder.EncodeToString(chunkHash[:])
+	return filepath.Join(storeDir, "chunks", base32Hash[:2], base32Hash)
 }
 
 type store struct {

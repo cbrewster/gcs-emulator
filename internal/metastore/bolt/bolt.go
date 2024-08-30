@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"time"
 
+	"go.etcd.io/bbolt"
+
 	"github.com/cbrewster/gcs-emulator/internal/chunkstore"
 	"github.com/cbrewster/gcs-emulator/internal/metastore"
-	"go.etcd.io/bbolt"
 )
 
 var (

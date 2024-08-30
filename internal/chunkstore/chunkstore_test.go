@@ -5,9 +5,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/shoenig/test/must"
+
 	"github.com/cbrewster/gcs-emulator/internal/chunkstore"
 	"github.com/cbrewster/gcs-emulator/internal/chunkstore/file"
-	"github.com/shoenig/test/must"
 )
 
 func newFileStore(t *testing.T) chunkstore.Store {
@@ -61,6 +62,18 @@ func TestWriteReadDeleteChunk(t *testing.T) {
 
 			_, err = store.NewReader(chunkHash)
 			must.ErrorIs(t, err, os.ErrNotExist)
+
+			// Writing the same chunk again should not error out.
+			w2, err := store.NewWriter()
+			must.NoError(t, err)
+			defer w2.Close()
+
+			_, err = w2.Write(contents)
+			must.NoError(t, err)
+
+			chunkHash2, _, err := w2.Close()
+			must.NoError(t, err)
+			must.Eq(t, chunkHash, chunkHash2)
 		})
 	}
 }
