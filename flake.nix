@@ -32,7 +32,12 @@
           version = "0.0.1";
           src = ./.;
           vendorHash = "sha256-ddkm24y+YP5AKd3P8JrHESl8zUSnJtefK0oSvOab2Ag=";
+          doCheck = false;
         };
+
+        checks.gcs-emulator = packages.gcs-emulator.overrideAttrs (final: {
+          doCheck = true;
+        });
 
         defaultPackage = packages.gcs-emulator;
       }
