@@ -31,7 +31,7 @@
           pname = "gcs-emulator";
           version = "0.0.1";
           src = ./.;
-          vendorSha256 = "";
+          vendorHash = "sha256-ddkm24y+YP5AKd3P8JrHESl8zUSnJtefK0oSvOab2Ag=";
         };
 
         defaultPackage = packages.gcs-emulator;
