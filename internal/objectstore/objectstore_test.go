@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/shoenig/test/must"
@@ -87,6 +88,52 @@ func TestWriteReadObject(t *testing.T) {
 			read, err := io.ReadAll(r)
 			must.NoError(t, err)
 			must.Eq(t, data, read)
+		})
+	}
+}
+
+func TestComposeObjects(t *testing.T) {
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			store := objectstore.New(tc.metaStore(t), tc.chunkStore(t))
+
+			bucket, err := store.CreateBucket("my-bucket")
+			must.NoError(t, err)
+
+			var compositeData []byte
+			var objects []*objectstore.Object
+			for i := 0; i < 3; i++ {
+				data, err := io.ReadAll(io.LimitReader(rand.Reader, 10))
+				must.NoError(t, err)
+
+				object := bucket.Object(strconv.Itoa(i))
+
+				w, err := object.NewWriter()
+				must.NoError(t, err)
+				defer w.Close()
+
+				_, err = w.Write(data)
+				must.NoError(t, err)
+
+				err = w.Close()
+				must.NoError(t, err)
+
+				compositeData = append(compositeData, data...)
+				objects = append(objects, object)
+			}
+
+			object := bucket.Object("composed")
+
+			err = object.ComposeFrom(objects...).Run()
+			must.NoError(t, err)
+
+			r, err := object.NewReader()
+			must.NoError(t, err)
+			defer r.Close()
+
+			read, err := io.ReadAll(r)
+			must.NoError(t, err)
+			must.Eq(t, compositeData, read)
 		})
 	}
 }

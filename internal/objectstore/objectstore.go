@@ -55,7 +55,7 @@ func (b *Bucket) Object(name string) *Object {
 	return &Object{
 		metaBucket: b.metaBucket,
 		chunkStore: b.chunkStore,
-		name:       b.name,
+		name:       name,
 	}
 }
 
@@ -192,4 +192,37 @@ func (r *ObjectReader) Close() error {
 	}
 
 	return r.current.Close()
+}
+
+func (o *Object) ComposeFrom(objects ...*Object) *Composer {
+	return &Composer{
+		metaBucket: o.metaBucket,
+		dest:       o,
+		from:       objects,
+	}
+}
+
+type Composer struct {
+	metaBucket metastore.Bucket
+	dest       *Object
+	from       []*Object
+}
+
+func (c *Composer) Run() error {
+	var chunks []chunkstore.ChunkHash
+
+	// TODO: Maybe this should be moved down to the meta layer and done in a transaction?
+	for _, object := range c.from {
+		meta, err := c.metaBucket.Object(object.name)
+		if err != nil {
+			return err
+		}
+		chunks = append(chunks, meta.Chunks...)
+	}
+
+	_, err := c.metaBucket.PutObject(c.dest.name, metastore.PutObjectOptions{
+		Chunks: chunks,
+		MD5Sum: chunkstore.MD5Hash{}, // Composite objects do not have an md5sum
+	})
+	return err
 }
